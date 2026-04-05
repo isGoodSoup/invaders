@@ -1,8 +1,13 @@
+import random
+
 import pygame
 
 from scripts import obstacle
 from scripts.obstacle import Block
 from scripts.player import Player
+from scripts.alien import Alien
+from scripts.proj import Projectile
+
 
 class Game:
     def __init__(self):
@@ -19,12 +24,20 @@ class Game:
             self.obstacle_ammount)]
         self.create_obstacles(screen_width//15, 440, *self.obstacle_x_pos)
 
+        # Aliens
+        self.aliens = pygame.sprite.Group()
+        self.alien_direction = 1
+        self.create_aliens(6, 8)
+
+        self.alien_projectiles = pygame.sprite.Group()
+
     def create_obstacle(self, start_x, start_y, offset_x):
         for row_index, row in enumerate(self.shape):
             for col_index, col in enumerate(row):
                 if col == "x":
                     x = start_x + col_index * self.block_size + offset_x
                     y = start_y + row_index * self.block_size
+
                     block = Block(x, y, self.block_size,(241, 79, 80))
                     self.blocks.add(block) # type: ignore
 
@@ -32,15 +45,52 @@ class Game:
         for offset_x in offset:
             self.create_obstacle(start_x, start_y, offset_x)
 
+    def create_aliens(self, rows, cols, x_distance=64, y_distance=48,
+                      x_offset=60, y_offset=50):
+        for row_index, row in enumerate(range(rows)):
+            for col_index, col in enumerate(range(cols)):
+                x = col_index * x_distance + x_offset
+                y = row_index * y_distance + y_offset
+
+                if row_index == 0:
+                    alien_sprite = Alien('yellow', x, y)
+                elif 1 <= row_index <= 2:
+                    alien_sprite = Alien('green', x, y)
+                else:
+                    alien_sprite = Alien('red', x, y)
+                self.aliens.add(alien_sprite) # type: ignore
+
+    def change_direction(self):
+        for alien in self.aliens.sprites():
+            if alien.rect.right >= screen_width:
+                self.alien_direction = -1
+                self.change_y(2)
+            if alien.rect.left <= 0:
+                self.alien_direction = 1
+                self.change_y(2)
+
+    def change_y(self, distance):
+        if self.aliens:
+            for alien in self.aliens.sprites():
+                alien.rect.y += distance
+
+    def alien_shooting(self):
+        if self.aliens:
+            alien = random.choice(self.aliens.sprites())
+            projectile = Projectile(alien, (241, 79, 80), alien.rect.top)
+            self.alien_projectiles.add(projectile) # type: ignore
+
     def run(self):
         # update all sprites
         self.player.update()
+        self.aliens.update(self.alien_direction)
+        self.change_direction()
 
         # draw all sprites
         self.player.sprite.projectiles.draw(screen)
         self.player.draw(screen)
-
         self.blocks.draw(screen)
+        self.aliens.draw(screen)
 
 if __name__ == '__main__':
     pygame.init()
@@ -52,11 +102,16 @@ if __name__ == '__main__':
     fps = 60
     game = Game()
 
+    ALIENLASER = pygame.USEREVENT + 1
+    pygame.time.set_timer(ALIENLASER, 800)
+
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == ALIENLASER:
+                game.alien_shooting()
 
         screen.fill((0, 0, 0))
         game.run()

@@ -1,7 +1,7 @@
 import pygame
 
 from scripts.utils import now
-
+from scripts.proj import Projectile
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos, screen_width, scale=4):
@@ -18,6 +18,8 @@ class Player(pygame.sprite.Sprite):
         self.shot_time = 0
         self.shot_cooldown = 300
 
+        self.projectiles = pygame.sprite.Group()
+
     def get_input(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] and self.rect.left >= 0:
@@ -30,7 +32,7 @@ class Player(pygame.sprite.Sprite):
             self.shot_time = now()
 
     def shoot(self):
-        pass
+        self.projectiles.add(Projectile(self, (250, 220, 0), self.rect.center)) # type: ignore
 
     def recharge(self):
         if not self.ready:
@@ -40,5 +42,5 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.get_input()
-        self.shoot()
+        self.projectiles.update()
         self.recharge()

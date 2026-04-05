@@ -9,6 +9,7 @@ class Game:
 
     def run(self):
         self.player.update()
+        self.player.sprite.projectiles.draw(screen)
         self.player.draw(screen)
 
 if __name__ == '__main__':

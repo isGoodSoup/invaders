@@ -1,5 +1,6 @@
 import pygame
 
+from scripts.controller import joysticks, controller
 from scripts.utils import now
 from scripts.proj import Projectile
 
@@ -27,6 +28,17 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_RIGHT] and self.rect.right <= self.screen_width:
             self.rect.x += self.velocity
         if keys[pygame.K_SPACE] and self.ready:
+            self.shoot()
+            self.ready = False
+            self.shot_time = now()
+
+        h_axis = controller.get_axis(0)
+        if h_axis < -0.1 and self.rect.left > 0:
+            self.rect.x += h_axis * self.velocity
+        elif h_axis > 0.1 and self.rect.right < self.screen_width:
+            self.rect.x += h_axis * self.velocity
+
+        if controller.get_button(0) and self.ready:
             self.shoot()
             self.ready = False
             self.shot_time = now()

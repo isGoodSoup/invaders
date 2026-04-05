@@ -99,8 +99,14 @@ class Game:
             for projectile in self.player.sprite.projectiles:
                 if pygame.sprite.spritecollide(projectile, self.blocks, True):
                     projectile.kill()
-                if pygame.sprite.spritecollide(projectile, self.aliens, True):
+
+                alien_hit = pygame.sprite.spritecollide(projectile, self.aliens, True)
+                if alien_hit:
+                    for alien in self.aliens:
+                        if alien in alien_hit:
+                            self.score += alien.value
                     projectile.kill()
+
                 if pygame.sprite.spritecollide(projectile, self.mother, True):
                     projectile.kill()
 
@@ -108,6 +114,7 @@ class Game:
             for projectile in self.alien_projectiles:
                 if pygame.sprite.spritecollide(projectile, self.blocks, True):
                     projectile.kill()
+
                 if pygame.sprite.spritecollide(projectile, self.player, False):
                     projectile.kill()
                     self.player.hitpoints -= 1

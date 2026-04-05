@@ -5,7 +5,7 @@ import pygame
 from scripts import obstacle
 from scripts.obstacle import Block
 from scripts.player import Player
-from scripts.alien import Alien
+from scripts.alien import Alien, Mothership
 from scripts.proj import Projectile
 
 
@@ -28,8 +28,15 @@ class Game:
         self.aliens = pygame.sprite.Group()
         self.alien_direction = 1
         self.create_aliens(6, 8)
-
         self.alien_projectiles = pygame.sprite.Group()
+
+        # Mothership
+        self.mother = pygame.sprite.GroupSingle()
+        self.mothership_spawn_time = random.randint(400,800)
+
+        # Score system
+        self.score = 0
+        self.high_score = 0
 
     def create_obstacle(self, start_x, start_y, offset_x):
         for row_index, row in enumerate(self.shape):
@@ -77,20 +84,58 @@ class Game:
     def alien_shooting(self):
         if self.aliens:
             alien = random.choice(self.aliens.sprites())
-            projectile = Projectile(alien, (241, 79, 80), alien.rect.top)
+            projectile = Projectile(alien, (241, 79, 80),
+                                    alien.rect.midbottom, speed=12)
             self.alien_projectiles.add(projectile) # type: ignore
+
+    def mothership_timeout(self):
+        self.mothership_spawn_time -= 1
+        if self.mothership_spawn_time == 0:
+            self.mother.add(Mothership(random.choice(['right', 'left']),# type: ignore
+                                       screen_width))
+
+    def collision(self):
+        if self.player.sprite.projectiles:
+            for projectile in self.player.sprite.projectiles:
+                if pygame.sprite.spritecollide(projectile, self.blocks, True):
+                    projectile.kill()
+                if pygame.sprite.spritecollide(projectile, self.aliens, True):
+                    projectile.kill()
+                if pygame.sprite.spritecollide(projectile, self.mother, True):
+                    projectile.kill()
+
+        if self.alien_projectiles:
+            for projectile in self.alien_projectiles:
+                if pygame.sprite.spritecollide(projectile, self.blocks, True):
+                    projectile.kill()
+                if pygame.sprite.spritecollide(projectile, self.player, False):
+                    projectile.kill()
+                    self.player.hitpoints -= 1
+                    if self.player.hitpoints <= 0:
+                        self.player.kill()
+
+        if self.aliens:
+            for alien in self.aliens.sprites():
+                if pygame.sprite.spritecollide(alien, self.player, True):
+                    pygame.quit()
 
     def run(self):
         # update all sprites
         self.player.update()
         self.aliens.update(self.alien_direction)
+        self.alien_projectiles.update()
         self.change_direction()
+        self.mothership_timeout()
+        self.mother.update()
+        self.collision()
 
         # draw all sprites
         self.player.sprite.projectiles.draw(screen)
+        self.alien_projectiles.draw(screen)
         self.player.draw(screen)
         self.blocks.draw(screen)
         self.aliens.draw(screen)
+        self.mother.draw(screen)
 
 if __name__ == '__main__':
     pygame.init()

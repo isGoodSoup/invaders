@@ -11,6 +11,8 @@ class Player(pygame.sprite.Sprite):
         self.width, self.height = self.image.get_width(), self.image.get_height()
         self.rect = self.image.get_rect(midbottom=pos)
         self.screen_width = screen_width
+        self.base_hitpoints = 3
+        self.hitpoints = self.base_hitpoints
         self.velocity = 4
 
         self.ready = True
